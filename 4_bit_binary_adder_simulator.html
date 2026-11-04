@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CO_MINI_PROJECT_GROUP_4 — 4-Bit Binary Adder GUI Simulator</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b0f19;
+      color: #f1f5f9;
+    }
+    :root {
+      --active-color: #f97316;
+      --active-Color-dark: #ea580c;
+      --active-glow: rgba(249, 115, 22, 0.70);
+      --active-fill-light: #fff7ed;
+      --active-fill-dark: #431407;
+      --low-wire: #64748b;
+      --low-switch-bg: #334155;
+      --low-switch-border: #475569;
+    }
+    @keyframes wirePulse {
+      0% { stroke-dashoffset: 24; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .wire-low {
+      stroke: var(--low-wire);
+      stroke-width: 2.2;
+      opacity: 0.55;
+      transition: stroke 0.15s ease, filter 0.15s ease, stroke-width 0.15s ease, opacity 0.15s ease;
+    }
+    .wire-high {
+      stroke: var(--active-color);
+      stroke-width: 3.4;
+      stroke-dasharray: 8 4;
+      animation: wirePulse 0.55s linear infinite;
+      filter: drop-shadow(0 0 5px var(--active-glow));
+      transition: stroke 0.15s ease, filter 0.15s ease, stroke-width 0.15s ease;
+    }
+    .wire-carry-high {
+      stroke: var(--active-color);
+      stroke-width: 3.5;
+      stroke-dasharray: 8 4;
+      animation: wirePulse 0.55s linear infinite;
+      filter: drop-shadow(0 0 6px var(--active-glow));
+      transition: stroke 0.15s ease, filter 0.15s ease;
+    }
+    .gate-body {
+      fill: #ffffff;
+      stroke: #475569;
+      stroke-width: 2.0;
+      transition: all 0.15s ease;
+    }
+    .gate-active {
+      fill: var(--active-fill-light);
+      stroke: var(--active-color);
+      stroke-width: 2.8;
+      filter: drop-shadow(0 0 5px var(--active-glow));
+    }
+    .dark-canvas .gate-body {
+      fill: #1e293b;
+      stroke: #64748b;
+    }
+    .dark-canvas .gate-active {
+      fill: var(--active-fill-dark);
+      stroke: var(--active-color);
+      filter: drop-shadow(0 0 6px var(--active-glow));
+    }
+    .stage-highlight {
+      stroke: #0284c7 !important;
+      stroke-width: 2.5 !important;
+      stroke-dasharray: 6 3;
+    }
+    .pin-btn {
+      cursor: pointer;
+      user-select: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950">
+
+  <!-- Top Navbar -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-900/95 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <div class="flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-mono font-bold text-lg shadow-inner">
+          4B
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">CO_MINI_PROJECT_GROUP_4</h1>
+            <span class="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+              4-Bit Full-Adder Circuit &amp; Auto-Verifier
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">
+            4-Bit Binary Adder &bull; Author: <span class="text-slate-300 font-medium">Soumik Jana</span> &bull; Tab: <code class="text-amber-300 font-mono">Main</code>
+          </p>
+        </div>
+      </div>
+
+      <!-- Global Action Toolbar -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/40 bg-orange-500/10 px-2.5 py-1 text-xs font-medium text-orange-300">
+          <span>⚡ Active Color:</span>
+          <select id="activeColorSelect" class="rounded bg-slate-900 border border-slate-700 px-1.5 py-0.5 text-xs font-mono text-white focus:outline-none">
+            <option value="orange" selected>🔶 Orange-Red (#f97316)</option>
+            <option value="cyan">💠 Electric Cyan (#06b6d4)</option>
+            <option value="crimson">🔴 Crimson Red (#ef4444)</option>
+            <option value="magenta">🟣 Neon Magenta (#d946ef)</option>
+            <option value="gold">🟡 Amber Gold (#eab308)</option>
+          </select>
+        </div>
+
+        <button id="btnCanvasTheme" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-orange-500/40 bg-orange-500/10 px-3 py-1.5 text-xs font-medium text-orange-300 hover:bg-orange-500/20 transition">
+          🎨 Canvas: CV Light
+        </button>
+
+        <button id="btnAudioToggle" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/90 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition">
+          <span id="audioIcon">🔊</span>
+          <span id="audioLabel">Sound On</span>
+        </button>
+
+        <button id="btnRipplePlay" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-sky-500/40 bg-sky-500/15 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-500/25 transition">
+          <span id="ripplePlayIcon">▶</span>
+          <span id="ripplePlayText">Animate Ripple</span>
+        </button>
+
+        <button id="btnRandomize" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700 transition">
+          🎲 Randomize
+        </button>
+
+        <button id="btnReset" type="button" class="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-300 hover:bg-rose-500/20 transition">
+          ↺ Reset (0)
+        </button>
+
+        <a href="https://circuitverse.org/users/480922/projects/co_mini_project_group_4-57e55942-2f4c-4b3f-b5f0-150f411ad7eb" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20 transition">
+          CircuitVerse ↗
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="mx-auto max-w-7xl px-4 py-5 space-y-5">
+
+    <!-- Top Control Deck: Inputs A, B, Mode M, and Live Output Readout -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+      <!-- Input Vector A (A3 A2 A1 A0) -->
+      <div class="lg:col-span-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-lg flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-sky-400">4-Bit Input Vector A</span>
+              <h2 class="text-sm font-bold text-white">Pins A3, A2, A1, A0</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <button id="btnADec" type="button" class="h-7 w-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-sm font-bold border border-slate-700" title="Decrement A">-</button>
+              <button id="btnAInc" type="button" class="h-7 w-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-sm font-bold border border-slate-700" title="Increment A">+</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 my-2">
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">A3 <span class="text-[9px] text-slate-500">(2³)</span></span>
+              <button id="pinA3" type="button" data-pin="A3" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">1</button>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">A2 <span class="text-[9px] text-slate-500">(2²)</span></span>
+              <button id="pinA2" type="button" data-pin="A2" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">0</button>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">A1 <span class="text-[9px] text-slate-500">(2¹)</span></span>
+              <button id="pinA1" type="button" data-pin="A1" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">0</button>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">A0 <span class="text-[9px] text-slate-500">(2⁰)</span></span>
+              <button id="pinA0" type="button" data-pin="A0" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">0</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono">
+          <span class="text-slate-400">Unsigned: <strong id="valAUnsigned" class="text-sky-300">8</strong></span>
+          <span class="text-slate-400">Signed: <strong id="valASigned" class="text-sky-300">-8</strong></span>
+          <span class="text-slate-400">Hex: <strong id="valAHex" class="text-sky-300">0x8</strong></span>
+        </div>
+      </div>
+
+      <!-- Input Vector B (B3 B2 B1 B0) -->
+      <div class="lg:col-span-3 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-lg flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-purple-400">4-Bit Input Vector B</span>
+              <h2 class="text-sm font-bold text-white">Pins B3, B2, B1, B0</h2>
+            </div>
+            <div class="flex items-center gap-1">
+              <button id="btnBDec" type="button" class="h-7 w-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-sm font-bold border border-slate-700" title="Decrement B">-</button>
+              <button id="btnBInc" type="button" class="h-7 w-7 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-mono text-sm font-bold border border-slate-700" title="Increment B">+</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2 my-2">
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">B3 <span class="text-[9px] text-slate-500">(2³)</span></span>
+              <button id="pinB3" type="button" data-pin="B3" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">1</button>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">B2 <span class="text-[9px] text-slate-500">(2²)</span></span>
+              <button id="pinB2" type="button" data-pin="B2" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">1</button>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">B1 <span class="text-[9px] text-slate-500">(2¹)</span></span>
+              <button id="pinB1" type="button" data-pin="B1" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">1</button>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/80 border border-slate-800 p-2.5">
+              <span class="text-[11px] font-mono text-slate-400 mb-1">B0 <span class="text-[9px] text-slate-500">(2⁰)</span></span>
+              <button id="pinB0" type="button" data-pin="B0" class="pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center">1</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono">
+          <span class="text-slate-400">Unsigned: <strong id="valBUnsigned" class="text-purple-300">15</strong></span>
+          <span class="text-slate-400">Signed: <strong id="valBSigned" class="text-purple-300">-1</strong></span>
+          <span class="text-slate-400">B: <strong id="valBStar" class="text-amber-300">1111</strong></span>
+        </div>
+      </div>
+
+      <!-- Output Pins (CARRY, S3, S2, S1, S0) & ALU Summary -->
+      <div class="lg:col-span-6 rounded-2xl border border-emerald-500/30 bg-slate-900/95 p-4 shadow-lg flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <span class="text-xs font-semibold uppercase tracking-wider text-emerald-400">Top Row Output Pins</span>
+              <h2 class="text-sm font-bold text-white">CARRY &rarr; S3 &rarr; S2 &rarr; S1 &rarr; S0</h2>
+            </div>
+            <span id="statusBadge" class="rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 font-mono text-xs text-emerald-300">
+              READY
+            </span>
+          </div>
+
+          <!-- 5 LED Output Blocks -->
+          <div class="grid grid-cols-5 gap-2 my-2">
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/90 border border-amber-500/30 p-2">
+              <span class="text-[10px] font-mono text-amber-300 mb-1">CARRY</span>
+              <div id="outCARRY" class="w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition">1</div>
+              <span class="text-[9px] font-mono text-slate-500 mt-1">C4 (2⁴)</span>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/90 border border-slate-800 p-2">
+              <span class="text-[10px] font-mono text-slate-300 mb-1">S3</span>
+              <div id="outS3" class="w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition">0</div>
+              <span class="text-[9px] font-mono text-slate-500 mt-1">2³ (8)</span>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/90 border border-slate-800 p-2">
+              <span class="text-[10px] font-mono text-slate-300 mb-1">S2</span>
+              <div id="outS2" class="w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition">1</div>
+              <span class="text-[9px] font-mono text-slate-500 mt-1">2² (4)</span>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/90 border border-slate-800 p-2">
+              <span class="text-[10px] font-mono text-slate-300 mb-1">S1</span>
+              <div id="outS1" class="w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition">1</div>
+              <span class="text-[9px] font-mono text-slate-500 mt-1">2¹ (2)</span>
+            </div>
+            <div class="flex flex-col items-center rounded-xl bg-slate-950/90 border border-slate-800 p-2">
+              <span class="text-[10px] font-mono text-slate-300 mb-1">S0</span>
+              <div id="outS0" class="w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition">1</div>
+              <span class="text-[9px] font-mono text-slate-500 mt-1">2⁰ (1)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Arithmetic Expression Banner -->
+        <div class="mt-3 pt-2.5 border-t border-slate-800/90 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+          <div>
+            <span class="text-slate-400">5-Bit Total: </span>
+            <strong id="out5BitUnsigned" class="text-emerald-300 text-sm">23</strong>
+            <span class="text-slate-500"> (4-Bit S: <strong id="out4BitUnsigned" class="text-slate-200">7</strong>)</span>
+          </div>
+          <div>
+            <span class="text-slate-400">Signed (2's): </span>
+            <strong id="outSignedResult" class="text-amber-300 text-sm">7</strong>
+          </div>
+          <div>
+            <span class="text-slate-400">Overflow V: </span>
+            <strong id="outOverflow" class="text-slate-300">1</strong>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Live Equation & Schematic View Tabs -->
+    <section class="rounded-2xl border border-slate-800 bg-slate-900/75 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-mono">
+        <span class="rounded-lg bg-slate-950 px-2.5 py-1 border border-slate-800 text-slate-300">
+          Equation: <strong id="liveEquationText" class="text-emerald-400">8 (1000₂) + 15 (1111₂) = 23 (10111₂)</strong>
+        </span>
+        <span id="subCarryNote" class="text-xs text-slate-400">
+          Carry C4 = 1
+        </span>
+      </div>
+
+      <!-- Stage Filter / View Mode Tabs -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs text-slate-400 mr-1">Schematic Focus:</span>
+        <button type="button" data-stage="all" class="stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-emerald-500 text-slate-950 font-semibold transition">All 4 Stages (Main)</button>
+        <button type="button" data-stage="0" class="stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Bit 0 (LSB)</button>
+        <button type="button" data-stage="1" class="stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Bit 1</button>
+        <button type="button" data-stage="2" class="stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Bit 2</button>
+        <button type="button" data-stage="3" class="stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition">Bit 3 (MSB)</button>
+      </div>
+    </section>
+
+    <!-- Exact CircuitVerse Replica Diagram Section -->
+    <section class="rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+            <span>4-Bit Binary Adder Circuit Diagram</span>
+            <span id="activeStageBadge" class="rounded bg-slate-800 px-2 py-0.5 text-xs font-mono text-sky-300 border border-slate-700">1:1 Layout: Top Outputs • Mid A &amp; B Rows • Rightward Gates</span>
+          </h2>
+          <p class="text-xs text-slate-400">
+            Matches the circuit layout of <code class="text-emerald-300">CO_MINI_PROJECT_GROUP_4</code>: Top horizontal outputs (<code class="text-amber-300">CARRY, S3, S2, S1, S0</code>), middle-left <code class="text-sky-300">A3..A0</code> row, middle-right <code class="text-purple-300">B3..B0</code> row, and gates facing rightward (&rarr;). Redundant gates in LSB removed. Click any A or B input box in the diagram to toggle!
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs font-mono">
+          <span class="flex items-center gap-1.5"><span id="legendHighDot" class="inline-block h-3 w-3 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]"></span> In-Use / Active HIGH (1)</span>
+          <span class="flex items-center gap-1.5"><span class="inline-block h-3 w-3 rounded-full bg-slate-500"></span> Inactive / LOW (0)</span>
+        </div>
+      </div>
+
+      <!-- Full 4-Stage Exact Replica Schematic Container -->
+      <div id="fullSchematicContainer" class="w-full overflow-x-auto custom-scrollbar rounded-xl border border-slate-700 bg-[#f8fafc] p-2 transition-colors duration-200">
+        <svg id="circuitSvg" viewBox="0 0 1260 720" class="w-full h-auto min-w-[920px] select-none"></svg>
+      </div>
+
+      <!-- Single-Stage Zoomed Gate Inspector (Shown when Bit 0..3 tab is selected) -->
+      <div id="singleStageContainer" class="hidden w-full overflow-x-auto custom-scrollbar rounded-xl border border-slate-800 bg-[#070b14] p-3">
+        <svg id="singleStageSvg" viewBox="0 0 920 420" class="w-full h-auto min-w-[680px] select-none"></svg>
+      </div>
+    </section>
+
+    <!-- Automated Truth Table Verification Script & Runner (Time Delay = 200s / Configurable) -->
+    <section class="rounded-2xl border border-emerald-500/40 bg-slate-900/95 p-4 sm:p-5 shadow-xl space-y-4">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="rounded-md bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-xs font-mono font-bold text-emerald-300">
+              AUTOMATED TRUTH TABLE VERIFIER
+            </span>
+            <h2 class="text-base font-bold text-white">Automated Input Injection &amp; Output Truth Table Verification Script</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">
+            Automatically feeds truth table inputs (<code class="text-amber-300">A3..A0, B3..B0</code>) into the circuit, captures the live gate-level outputs (<code class="text-emerald-300">CARRY, S3..S0</code>), verifies them against the expected binary arithmetic truth table, and steps at your configured <code class="text-sky-300">time_delay</code> (configured to <strong class="text-white">200s</strong> by default, with instant step &amp; fast sweep options).
+          </p>
+        </div>
+
+        <!-- Primary Script Execution Controls -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btnAutoVerifyStart" type="button" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition">
+            <span id="autoVerifyIcon">▶</span>
+            <span id="autoVerifyText">Start Auto-Verify (Delay = 200s)</span>
+          </button>
+
+          <button id="btnAutoStepNow" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 px-3 py-2 text-xs font-semibold text-sky-300 transition" title="Immediately trigger next truth table vector without waiting for countdown">
+            ⏭ Step Next Input Now
+          </button>
+
+          <button id="btnAutoInstantAll" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/25 px-3 py-2 text-xs font-semibold text-purple-300 transition" title="Verify all rows immediately">
+            ⚡ Verify All Instantly
+          </button>
+
+          <button id="btnToggleScriptCode" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-2 text-xs font-medium text-slate-200 transition">
+            📜 View / Copy Automation Script
+          </button>
+        </div>
+      </div>
+
+      <!-- Delay & Test Suite Configuration Bar -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 rounded-xl border border-slate-800 bg-slate-950/80 p-3">
+        <!-- Time Delay Setting -->
+        <div class="md:col-span-5 flex flex-wrap items-center gap-2">
+          <label for="delayInputVal" class="text-xs font-semibold text-slate-300">Time Delay:</label>
+          <input id="delayInputVal" type="number" min="1" value="200" class="w-20 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs font-mono font-bold text-emerald-300 focus:border-emerald-500 focus:outline-none" />
+          <select id="delayUnitSelect" class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs font-mono text-slate-200 focus:border-emerald-500 focus:outline-none">
+            <option value="s" selected>seconds (s) [200s = 200,000ms]</option>
+            <option value="ms">milliseconds (ms) [200ms = 0.2s]</option>
+          </select>
+
+          <div class="flex items-center gap-1 ml-1">
+            <button type="button" data-delay-preset="200,s" class="delay-preset-btn rounded bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[11px] font-mono text-emerald-300 hover:bg-emerald-500/30">200s</button>
+            <button type="button" data-delay-preset="200,ms" class="delay-preset-btn rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[11px] font-mono text-slate-300 hover:bg-slate-700">200ms</button>
+            <button type="button" data-delay-preset="1,s" class="delay-preset-btn rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[11px] font-mono text-slate-300 hover:bg-slate-700">1s</button>
+            <button type="button" data-delay-preset="50,ms" class="delay-preset-btn rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[11px] font-mono text-slate-300 hover:bg-slate-700">50ms</button>
+          </div>
+        </div>
+
+        <!-- Test Vector Scope -->
+        <div class="md:col-span-4 flex items-center gap-2">
+          <label for="truthTableScope" class="text-xs font-semibold text-slate-300 whitespace-nowrap">Truth Table Scope:</label>
+          <select id="truthTableScope" class="w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-200 focus:border-emerald-500 focus:outline-none">
+            <option value="full512">Full Addition Truth Table (256 Inputs)</option>
+            <option value="key32" selected>Representative Addition Truth Table (16 Key Vectors)</option>
+            <option value="add256">Addition Truth Table (256 Inputs)</option>
+            
+          </select>
+        </div>
+
+        <!-- Live Countdown & Pass/Fail Status -->
+        <div class="md:col-span-3 flex items-center justify-between md:justify-end gap-3 font-mono text-xs">
+          <span id="countdownTimerText" class="rounded-lg bg-slate-900 border border-slate-800 px-2.5 py-1 text-amber-300">
+            Delay Timer: 200.0s
+          </span>
+          <span id="verifyPassSummary" class="rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 text-emerald-300 font-bold">
+            PASS: 0 / 0
+          </span>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-950 rounded-full h-2.5 border border-slate-800 overflow-hidden">
+        <div id="verifyProgressBar" class="bg-emerald-500 h-full transition-all duration-200" style="width: 0%"></div>
+      </div>
+
+      <!-- Collapsible Standalone Automation Script Code Box (for CircuitVerse Console & Standalone Use) -->
+      <div id="scriptCodeDrawer" class="hidden rounded-xl border border-slate-700 bg-slate-950 p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">Automated Truth Table Verification Script (`time_delay = 200s`)</h4>
+            <p class="text-[11px] text-slate-400">Runs directly inside this simulator AND works in the CircuitVerse browser console (`F12 &rarr; Console`).</p>
+          </div>
+          <button id="btnCopyScriptCode" type="button" class="rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/30 transition">
+            📋 Copy Verification Script
+          </button>
+        </div>
+        <pre id="automationScriptPre" class="overflow-x-auto custom-scrollbar rounded-lg bg-[#050811] p-3 font-mono text-[11px] text-slate-300 border border-slate-800 leading-relaxed"><code>// Automated Truth Table Verification Script for CO_MINI_PROJECT_GROUP_4 (4-Bit Binary Adder)
+// Automatically feeds 9-bit inputs (A3..A0, B3..B0), reads 5-bit outputs (CARRY, S3..S0), and verifies truth table.
+const TIME_DELAY_SECONDS = 200; // Time delay = 200s (200,000 ms) between each input vector
+const TIME_DELAY_MS = TIME_DELAY_SECONDS * 1000;
+
+async function autoVerifyTruthTable(delayMs = TIME_DELAY_MS) {
+  console.log(`Starting Truth Table Verification with delay = ${delayMs / 1000}s (${delayMs}ms)...`);
+  let passed = 0, failed = 0, step = 0;
+
+  for (let M = 0; M <= 1; M++) {
+    for (let A = 0; A < 16; A++) {
+      for (let B = 0; B < 16; B++) {
+        step++;
+        // 1. Automatically apply input bits to circuit pins (A3..A0, B3..B0, M)
+        window.setCircuitInputs(A, B, M);
+
+        // 2. Read actual gate-level outputs from the circuit simulator
+        const out = window.readCircuitOutputs(); // { CARRY, S3, S2, S1, S0, valS, val5Bit }
+
+        // 3. Compute expected truth table output using B = B ^ (M ? 0xF : 0x0) and C0 = 0
+        const bComp = M === 1 ? (B ^ 0xF) : B;
+        const expected5Bit = A + bComp + M;
+        const expCarry = (expected5Bit >> 4) & 1;
+        const expS = expected5Bit & 0xF;
+
+        const isPass = (out.CARRY === expCarry) && (out.valS === expS);
+        if (isPass) passed++; else failed++;
+
+        console.log(
+          `[Step ${step}/512] M=${M} | A=${A.toString(2).padStart(4,'0')} (${A}) | B=${B.toString(2).padStart(4,'0')} (${B}) ` +
+          `=> CARRY=${out.CARRY} S=${out.valS.toString(2).padStart(4,'0')} | Expected=${expCarry}_${expS.toString(2).padStart(4,'0')} | ${isPass ? 'PASS ✅' : 'FAIL ❌'}`
+        );
+
+        // 4. Wait configured time delay (200s = 200,000ms) before feeding next input
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  console.log(`Verification Complete! Passed: ${passed}, Failed: ${failed}`);
+}</code></pre>
+      </div>
+
+      <!-- Automated Truth Table Verification Results Table -->
+      <div class="overflow-x-auto max-h-72 custom-scrollbar rounded-xl border border-slate-800">
+        <table class="w-full text-left border-collapse font-mono text-xs">
+          <thead class="sticky top-0 bg-slate-950 text-slate-400 border-b border-slate-800 z-10">
+            <tr>
+              <th class="py-2 px-3">#</th>
+              <th class="py-2 px-2">—</th>
+              <th class="py-2 px-2 text-sky-300">Input A (A3 A2 A1 A0)</th>
+              <th class="py-2 px-2 text-purple-300">Input B (B3 B2 B1 B0)</th>
+              <th class="py-2 px-2 text-amber-300">B (B&oplus;M)</th>
+              <th class="py-2 px-2 text-amber-300">Circuit CARRY</th>
+              <th class="py-2 px-2 text-emerald-300">Circuit S3 S2 S1 S0</th>
+              <th class="py-2 px-2 text-slate-300">Expected (C4_S3..S0)</th>
+              <th class="py-2 px-2">Arithmetic Check</th>
+              <th class="py-2 px-3 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody id="autoTruthTableBody" class="divide-y divide-slate-800/70 bg-slate-900/40">
+            <!-- Populated dynamically by the automated verifier -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Bottom Grid: Stage-by-Stage Signal Table + Testbench Logger -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- Stage-by-Stage Gate Signal Breakdown -->
+      <div class="lg:col-span-7 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="text-sm font-bold text-white">Bit-Slice Internal Node &amp; Gate Signal Breakdown</h3>
+            <p class="text-xs text-slate-400">Live values of all logic gates per Full-Adder stage ($i = 3, 2, 1, 0$)</p>
+          </div>
+          <span class="text-xs font-mono text-slate-400">
+            Gates dynamically updated
+          </span>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse font-mono text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-950/90 text-slate-400">
+                <th class="py-2.5 px-3">Stage</th>
+                <th class="py-2.5 px-2 text-center text-sky-300">A<sub>i</sub></th>
+                <th class="py-2.5 px-2 text-center text-purple-300">B<sub>i</sub></th>
+                <th class="py-2.5 px-2 text-center text-amber-300">M</th>
+                <th class="py-2.5 px-2 text-center" title="XOR1: B_i XOR M">B<sub>i</sub> = B<sub>i</sub>&oplus;M</th>
+                <th class="py-2.5 px-2 text-center" title="XOR2: A_i XOR B_i">P<sub>i</sub> = A<sub>i</sub>&oplus;B<sub>i</sub></th>
+                <th class="py-2.5 px-2 text-center text-amber-300" title="Carry In to Stage i">C<sub>i</sub> (In)</th>
+                <th class="py-2.5 px-2 text-center" title="AND1: A_i AND B_i">G<sub>i</sub> = A<sub>i</sub>&middot;B<sub>i</sub></th>
+                <th class="py-2.5 px-2 text-center" title="AND2: P_i AND C_i">T<sub>i</sub> = P<sub>i</sub>&middot;C<sub>i</sub></th>
+                <th class="py-2.5 px-2 text-center text-emerald-300" title="XOR3: P_i XOR C_i">S<sub>i</sub> (Sum)</th>
+                <th class="py-2.5 px-2 text-center text-amber-300" title="OR1: G_i OR T_i">C<sub>i+1</sub> (Out)</th>
+              </tr>
+            </thead>
+            <tbody id="signalTableBody" class="divide-y divide-slate-800/70 bg-slate-900/40">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Boolean Logic Equations Reference Card -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="rounded-xl bg-slate-950/70 border border-slate-800/90 p-3">
+            <div class="font-semibold text-emerald-400 mb-1">Sum Logic (XOR Gates)</div>
+            <ul class="space-y-1 font-mono text-[11px] text-slate-300">
+              <li>&bull; P<sub>i</sub> = A<sub>i</sub> &oplus; B<sub>i</sub> <span class="text-slate-500">(Half-Adder Sum)</span></li>
+              <li>&bull; S<sub>i</sub> = P<sub>i</sub> &oplus; C<sub>i</sub> = A<sub>i</sub> &oplus; B<sub>i</sub> &oplus; C<sub>i</sub></li>
+            </ul>
+          </div>
+          <div class="rounded-xl bg-slate-950/70 border border-slate-800/90 p-3">
+            <div class="font-semibold text-amber-400 mb-1">Ripple-Carry Cascade Logic (AND / OR Gates)</div>
+            <ul class="space-y-1 font-mono text-[11px] text-slate-300">
+              <li>&bull; C<sub>0</sub> = 0 <span class="text-slate-500">(Fixed for Addition)</span></li>
+              <li>&bull; C<sub>i+1</sub> = (A<sub>i</sub> &middot; B<sub>i</sub>) + (C<sub>i</sub> &middot; (A<sub>i</sub> &oplus; B<sub>i</sub>))</li>
+              <li>&bull; CARRY = C<sub>4</sub>, Overflow V = C<sub>3</sub> &oplus; C<sub>4</sub></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Verification Testbench & Snapshot Logger -->
+      <div class="lg:col-span-5 rounded-2xl border border-slate-800 bg-slate-900/90 p-4 shadow-lg flex flex-col justify-between">
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-white">Manual Snapshot Log</h3>
+              <p class="text-xs text-slate-400">Record custom circuit states or click any row to load inputs</p>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="btnLogCurrent" type="button" class="rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/30 transition">
+                + Record State
+              </button>
+              <button id="btnClearLog" type="button" class="rounded-lg bg-slate-800 border border-slate-700 px-2.5 py-1 text-xs text-slate-300 hover:bg-slate-700 transition">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-y-auto max-h-60 custom-scrollbar rounded-xl border border-slate-800">
+            <table class="w-full text-left border-collapse font-mono text-xs">
+              <thead class="sticky top-0 bg-slate-950 text-slate-400 border-b border-slate-800">
+                <tr>
+                                    <th class="py-2 px-2">A (Bin/Dec)</th>
+                  <th class="py-2 px-2">B (Bin/Dec)</th>
+                  <th class="py-2 px-2 text-amber-300">CARRY</th>
+                  <th class="py-2 px-2 text-emerald-300">S (Bin/Result)</th>
+                </tr>
+              </thead>
+              <tbody id="testbenchBody" class="divide-y divide-slate-800/70 bg-slate-900/50">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span>Click any recorded row to restore its inputs to the circuit.</span>
+          <button id="btnCopyLog" type="button" class="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-200 hover:bg-slate-700 transition">
+            📋 Copy CSV
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed bottom-4 right-4 z-50 hidden rounded-xl border border-emerald-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-medium text-emerald-300 shadow-2xl backdrop-blur">
+    Copied to clipboard!
+  </div>
+
+  <script>
+    // --- Circuit State (Initialized to exact CircuitVerse snapshot: A=1000 (8), B=1111 (15), M=0 => CARRY=1, S=0111) ---
+    const state = {
+      A: [0, 0, 0, 1], // [A0, A1, A2, A3] -> A3=1, A2=0, A1=0, A0=0
+      B: [1, 1, 1, 1], // [B0, B1, B2, B3] -> B3=1, B2=1, B1=1, B0=1
+      M: 0,            // Fixed LOW carry-in: C0 = 0
+      selectedStage: 'all',
+      rippleHighlightStage: null,
+      rippleTimer: null,
+      soundEnabled: true,
+      audioCtx: null,
+      cvLightTheme: true,
+      activeColorKey: 'orange',
+      palettes: {
+        orange: {
+          main: '#f97316',
+          dark: '#c2410c',
+          glow: 'rgba(249, 115, 22, 0.70)',
+          fillLight: '#fff7ed',
+          fillDark: '#431407',
+          btnClass: 'bg-orange-500 text-slate-950 border-orange-300 shadow-[0_0_14px_rgba(249,115,22,0.65)]',
+          dotClass: 'inline-block h-3 w-3 rounded-full bg-orange-500 shadow-[0_0_8px_#f97316]'
+        },
+        cyan: {
+          main: '#06b6d4',
+          dark: '#0e7490',
+          glow: 'rgba(6, 182, 212, 0.70)',
+          fillLight: '#ecfeff',
+          fillDark: '#083344',
+          btnClass: 'bg-cyan-400 text-slate-950 border-cyan-200 shadow-[0_0_14px_rgba(6,182,212,0.65)]',
+          dotClass: 'inline-block h-3 w-3 rounded-full bg-cyan-400 shadow-[0_0_8px_#06b6d4]'
+        },
+        crimson: {
+          main: '#ef4444',
+          dark: '#b91c1c',
+          glow: 'rgba(239, 68, 68, 0.70)',
+          fillLight: '#fef2f2',
+          fillDark: '#450a0a',
+          btnClass: 'bg-red-500 text-white border-red-300 shadow-[0_0_14px_rgba(239,68,68,0.65)]',
+          dotClass: 'inline-block h-3 w-3 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]'
+        },
+        magenta: {
+          main: '#d946ef',
+          dark: '#a21caf',
+          glow: 'rgba(217, 70, 239, 0.70)',
+          fillLight: '#fdf4ff',
+          fillDark: '#4a044e',
+          btnClass: 'bg-fuchsia-500 text-white border-fuchsia-300 shadow-[0_0_14px_rgba(217,70,239,0.65)]',
+          dotClass: 'inline-block h-3 w-3 rounded-full bg-fuchsia-500 shadow-[0_0_8px_#d946ef]'
+        },
+        gold: {
+          main: '#eab308',
+          dark: '#a16207',
+          glow: 'rgba(234, 179, 8, 0.70)',
+          fillLight: '#fefce8',
+          fillDark: '#422006',
+          btnClass: 'bg-yellow-400 text-slate-950 border-yellow-200 shadow-[0_0_14px_rgba(234,179,8,0.65)]',
+          dotClass: 'inline-block h-3 w-3 rounded-full bg-yellow-400 shadow-[0_0_8px_#eab308]'
+        }
+      },
+      logs: [],
+      // Automated Truth Table Verifier State
+      autoVerify: {
+        running: false,
+        vectors: [],
+        currentIndex: 0,
+        passed: 0,
+        failed: 0,
+        delayMs: 200000, // Default 200s = 200,000ms as requested
+        remainingMs: 200000,
+        tickInterval: null,
+        results: []
+      }
+    };
+
+    // --- Web Audio Synthesizer ---
+    function playTone(freq = 520, duration = 0.045, type = 'sine') {
+      if (!state.soundEnabled) return;
+      try {
+        if (!state.audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) state.audioCtx = new AudioContextClass();
+        }
+        if (!state.audioCtx) return;
+        if (state.audioCtx.state === 'suspended') {
+          state.audioCtx.resume();
+        }
+        const osc = state.audioCtx.createOscillator();
+        const gain = state.audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, state.audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, state.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, state.audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(state.audioCtx.destination);
+        osc.start();
+        osc.stop(state.audioCtx.currentTime + duration);
+      } catch (e) {
+        // Ignore audio context restrictions
+      }
+    }
+
+    // --- Pure Gate-Level Circuit Simulation Engine ---
+    function computeCircuit() {
+      const stages = [];
+      let cIn = 0; // Fixed C0 = 0 for addition
+
+      for (let i = 0; i < 4; i++) {
+        const a = state.A[i];
+        const b = state.B[i];
+        const m = 0;
+
+        // Gate 1 (Mode XOR): B_i = B_i XOR M
+        const bStar = b; // B is connected directly; no mode XOR
+        // Gate 2 (Full Adder XOR1): P_i = A_i XOR B_i
+        const p = a ^ bStar;
+        // Gate 3 (Full Adder XOR2): S_i = P_i XOR C_i
+        const s = p ^ cIn;
+        // Gate 4 (Full Adder AND1): G_i = A_i AND B_i
+        const g = a & bStar;
+        // Gate 5 (Full Adder AND2): T_i = P_i AND C_i
+        const t = p & cIn;
+        // Gate 6 (Full Adder OR): C_{i+1} = G_i OR T_i
+        const cOut = g | t;
+
+        stages.push({
+          i,
+          a,
+          b,
+          m,
+          bStar,
+          p,
+          cIn,
+          g,
+          t,
+          s,
+          cOut
+        });
+
+        cIn = cOut;
+      }
+
+      const carryOut = stages[3].cOut; // C4 = CARRY
+      const overflow = stages[3].cIn ^ stages[3].cOut; // V = C3 XOR C4
+
+      const valA = (state.A[3] << 3) | (state.A[2] << 2) | (state.A[1] << 1) | state.A[0];
+      const valB = (state.B[3] << 3) | (state.B[2] << 2) | (state.B[1] << 1) | state.B[0];
+      const valBStar = (stages[3].bStar << 3) | (stages[2].bStar << 2) | (stages[1].bStar << 1) | stages[0].bStar;
+      const valS = (stages[3].s << 3) | (stages[2].s << 2) | (stages[1].s << 1) | stages[0].s;
+      const val5Bit = (carryOut << 4) | valS;
+
+      const toSigned4 = (v) => (v & 8 ? v - 16 : v);
+
+      return {
+        stages,
+        carryOut,
+        overflow,
+        valA,
+        valB,
+        valBStar,
+        valS,
+        val5Bit,
+        signedA: toSigned4(valA),
+        signedB: toSigned4(valB),
+        signedS: toSigned4(valS)
+      };
+    }
+
+    // Expose Global Helper Hooks for Console / Script Automation
+    window.setCircuitInputs = function(valA, valB, mVal) {
+      setVectors(valA, valB, mVal);
+    };
+    window.readCircuitOutputs = function() {
+      const sim = computeCircuit();
+      return {
+        CARRY: sim.carryOut,
+        S3: sim.stages[3].s,
+        S2: sim.stages[2].s,
+        S1: sim.stages[1].s,
+        S0: sim.stages[0].s,
+        valS: sim.valS,
+        val5Bit: sim.val5Bit
+      };
+    };
+
+    function bin4(num) {
+      return (num & 0xF).toString(2).padStart(4, '0');
+    }
+
+    // --- Render Top Controls & Readouts ---
+    function updateControlDeck(sim) {
+      const pal = state.palettes[state.activeColorKey] || state.palettes.orange;
+      for (let i = 0; i < 4; i++) {
+        const btnA = document.getElementById('pinA' + i);
+        const aVal = state.A[i];
+        btnA.textContent = aVal;
+        btnA.className = 'pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center border ' +
+          (aVal
+            ? pal.btnClass
+            : 'bg-slate-800/90 text-slate-400 border-slate-700 hover:bg-slate-700');
+
+        const btnB = document.getElementById('pinB' + i);
+        const bVal = state.B[i];
+        btnB.textContent = bVal;
+        btnB.className = 'pin-toggle w-11 h-11 rounded-xl font-mono text-lg font-bold transition shadow-md flex items-center justify-center border ' +
+          (bVal
+            ? pal.btnClass
+            : 'bg-slate-800/90 text-slate-400 border-slate-700 hover:bg-slate-700');
+      }
+
+      document.getElementById('valAUnsigned').textContent = sim.valA;
+      document.getElementById('valASigned').textContent = sim.signedA;
+      document.getElementById('valAHex').textContent = '0x' + sim.valA.toString(16).toUpperCase();
+
+      document.getElementById('valBUnsigned').textContent = sim.valB;
+      document.getElementById('valBSigned').textContent = sim.signedB;
+      document.getElementById('valBStar').textContent = bin4(sim.valBStar);
+
+      // Addition-only circuit: mode selector removed; C0 is fixed LOW.
+
+      const outCarryEl = document.getElementById('outCARRY');
+      outCarryEl.textContent = sim.carryOut;
+      outCarryEl.className = 'w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition ' +
+        (sim.carryOut
+          ? pal.btnClass
+          : 'bg-slate-900 text-slate-500 border-slate-800');
+
+      for (let i = 0; i < 4; i++) {
+        const sVal = sim.stages[i].s;
+        const el = document.getElementById('outS' + i);
+        el.textContent = sVal;
+        el.className = 'w-10 h-10 rounded-xl font-mono text-lg font-bold flex items-center justify-center border transition ' +
+          (sVal
+            ? pal.btnClass
+            : 'bg-slate-900 text-slate-500 border-slate-800');
+      }
+
+      document.getElementById('out5BitUnsigned').textContent = sim.val5Bit;
+      document.getElementById('out4BitUnsigned').textContent = sim.valS;
+
+      const signedResultEl = document.getElementById('outSignedResult');
+      signedResultEl.textContent = `${sim.signedS}`;
+
+      const ovfEl = document.getElementById('outOverflow');
+      ovfEl.textContent = sim.overflow ? '1 (OVERFLOW)' : '0 (OK)';
+      ovfEl.className = sim.overflow ? 'text-rose-400 font-bold' : 'text-emerald-400';
+
+      const eqEl = document.getElementById('liveEquationText');
+      const noteEl = document.getElementById('subCarryNote');
+      eqEl.textContent = `${sim.valA} (${bin4(sim.valA)}₂) + ${sim.valB} (${bin4(sim.valB)}₂) = ${sim.val5Bit} (${sim.carryOut}${bin4(sim.valS)}₂)`;
+      noteEl.textContent = `Addition only • Carry Out C4 = ${sim.carryOut}`;
+    }
+
+    // --- Rightward-Facing Gate Shapes with Dynamic Active Color ---
+    function getActivePalette() {
+      return state.palettes[state.activeColorKey] || state.palettes.orange;
+    }
+
+    function drawXorGate(x, y, active, label) {
+      const pal = getActivePalette();
+      const cls = active ? 'gate-body gate-active' : 'gate-body';
+      const strokeColor = active ? pal.main : (state.cvLightTheme ? '#475569' : '#64748b');
+      const textColor = state.cvLightTheme ? '#0f172a' : '#f8fafc';
+      return `
+        <g transform="translate(${x}, ${y})">
+          <path d="M -5,0 Q 5,16 -5,32" fill="none" stroke="${strokeColor}" stroke-width="${active ? '2.8' : '2.0'}" />
+          <path d="M 2,0 L 16,0 Q 34,2 42,16 Q 34,30 16,32 L 2,32 Q 11,16 2,0 Z" class="${cls}" />
+          <circle cx="43" cy="16" r="2.5" fill="${active ? pal.main : '#475569'}" />
+          ${label ? `<text x="20" y="19" text-anchor="middle" fill="${textColor}" font-family="JetBrains Mono" font-size="7.5" font-weight="700">${label}</text>` : ''}
+        </g>
+      `;
+    }
+
+    function drawAndGate(x, y, active, label) {
+      const pal = getActivePalette();
+      const cls = active ? 'gate-body gate-active' : 'gate-body';
+      const textColor = state.cvLightTheme ? '#0f172a' : '#f8fafc';
+      return `
+        <g transform="translate(${x}, ${y})">
+          <path d="M 0,0 L 20,0 A 16,16 0 0 1 20,32 L 0,32 Z" class="${cls}" />
+          <circle cx="37" cy="16" r="2.5" fill="${active ? pal.main : '#475569'}" />
+          ${label ? `<text x="17" y="19" text-anchor="middle" fill="${textColor}" font-family="JetBrains Mono" font-size="7.5" font-weight="700">${label}</text>` : ''}
+        </g>
+      `;
+    }
+
+    function drawOrGate(x, y, active, label) {
+      const pal = getActivePalette();
+      const cls = active ? 'gate-body gate-active' : 'gate-body';
+      const textColor = state.cvLightTheme ? '#0f172a' : '#f8fafc';
+      return `
+        <g transform="translate(${x}, ${y})">
+          <path d="M 0,0 L 15,0 Q 33,2 40,16 Q 33,30 15,32 L 0,32 Q 9,16 0,0 Z" class="${cls}" />
+          <circle cx="41" cy="16" r="2.5" fill="${active ? pal.main : '#475569'}" />
+          ${label ? `<text x="19" y="19" text-anchor="middle" fill="${textColor}" font-family="JetBrains Mono" font-size="7.5" font-weight="700">${label}</text>` : ''}
+        </g>
+      `;
+    }
+
+    // Output Box (Top Row: CARRY, S3, S2, S1, S0) — Lights up in Active Color when in use (1), Slate Grey when 0
+    function drawCVOutputPin(x, y, val, label) {
+      const pal = getActivePalette();
+      const boxFill = val ? pal.main : '#334155';
+      const boxStroke = val ? pal.dark : '#1e293b';
+      const glowFilter = val ? `filter: drop-shadow(0 0 7px ${pal.glow});` : '';
+      return `
+        <g transform="translate(${x}, ${y})">
+          <rect x="-24" y="-22" width="48" height="16" rx="3" fill="${val ? pal.fillLight : '#ffffff'}" stroke="${val ? pal.main : '#94a3b8'}" stroke-width="1.4" />
+          <text x="0" y="-11" text-anchor="middle" fill="#0f172a" font-family="JetBrains Mono" font-size="10" font-weight="700">${label}</text>
+          <rect x="-16" y="0" width="32" height="28" rx="4" fill="${boxFill}" stroke="${boxStroke}" stroke-width="2.2" style="${glowFilter}" />
+          <text x="0" y="19" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="14" font-weight="700">${val}</text>
+          <circle cx="0" cy="28" r="3.2" fill="${val ? pal.main : '#475569'}" />
+        </g>
+      `;
+    }
+
+    // Input Switch Box (Middle Row: A3..A0, B3..B0, and Far-Left M) — Lights up in Active Color when ON (1), Slate Grey when OFF (0)
+    function drawCVInputPin(x, y, val, pinKey, labelBelow) {
+      const pal = getActivePalette();
+      const boxFill = val ? pal.main : '#334155';
+      const boxStroke = val ? pal.dark : '#1e293b';
+      const glowFilter = val ? `filter: drop-shadow(0 0 7px ${pal.glow});` : '';
+      return `
+        <g transform="translate(${x}, ${y})" class="pin-btn" data-toggle-pin="${pinKey}">
+          <rect x="-16" y="0" width="32" height="28" rx="4" fill="${boxFill}" stroke="${boxStroke}" stroke-width="2.2" style="${glowFilter}" />
+          <text x="0" y="19" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="14" font-weight="700">${val}</text>
+          <circle cx="16" cy="14" r="3.2" fill="${val ? pal.main : '#475569'}" />
+          ${labelBelow ? `
+            <rect x="-16" y="32" width="32" height="15" rx="3" fill="${val ? pal.fillLight : '#ffffff'}" stroke="${val ? pal.main : '#cbd5e1'}" stroke-width="1.2" />
+            <text x="0" y="43" text-anchor="middle" fill="#0f172a" font-family="JetBrains Mono" font-size="10" font-weight="700">${labelBelow}</text>
+          ` : ''}
+        </g>
+      `;
+    }
+
+    // --- Render Exact 1:1 Replica of Given CircuitVerse Diagram (`Main` Tab) ---
+    function renderFullSchematic(sim) {
+      const svg = document.getElementById('circuitSvg');
+      const container = document.getElementById('fullSchematicContainer');
+      if (state.cvLightTheme) {
+        container.classList.remove('bg-[#070b14]', 'dark-canvas');
+        container.classList.add('bg-[#f8fafc]');
+      } else {
+        container.classList.remove('bg-[#f8fafc]');
+        container.classList.add('bg-[#070b14]', 'dark-canvas');
+      }
+
+      const wCls = (val) => val ? 'wire-high' : 'wire-low';
+      const pal = getActivePalette();
+      const dotColor = (val) => val ? pal.main : '#64748b';
+      const gridDotColor = state.cvLightTheme ? '#cbd5e1' : '#1e293b';
+      const bgFill = state.cvLightTheme ? '#f8fafc' : '#070b14';
+      const labelColor = state.cvLightTheme ? '#334155' : '#94a3b8';
+
+      // Top Row Output X Positions (Left to Right: CARRY -> S3 -> S2 -> S1 -> S0)
+      const outX = {
+        CARRY: 240,
+        S3: 410,
+        S2: 580,
+        S1: 750,
+        S0: 920
+      };
+      const outY = 44;
+
+      // Middle Region Input X Positions
+      // Set A (Center-Left Horizontal Row: A3, A2, A1, A0)
+      const aPinX = { 3: 185, 2: 265, 1: 345, 0: 425 };
+      const abPinY = 295;
+      // Set B (Center-Right Horizontal Row: B3, B2, B1, B0)
+      const bPinX = { 3: 545, 2: 625, 1: 705, 0: 785 };
+
+      let html = `
+        <defs>
+          <pattern id="cvGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1.1" fill="${gridDotColor}" />
+          </pattern>
+        </defs>
+        <rect width="1260" height="720" fill="${bgFill}" rx="8" />
+        <rect width="1260" height="720" fill="url(#cvGrid)" rx="8" />
+
+        <!-- Region Annotations (Subtle CircuitVerse Guide Labels) -->
+        <text x="20" y="22" fill="${labelColor}" font-family="Inter" font-size="11" font-weight="700">
+          MAIN CIRCUIT • TOP OUTPUTS (CARRY, S3, S2, S1, S0)
+        </text>
+        <text x="170" y="278" fill="${labelColor}" font-family="Inter" font-size="11" font-weight="700">
+          INPUT SET A (A3..A0)
+        </text>
+        <text x="530" y="278" fill="${labelColor}" font-family="Inter" font-size="11" font-weight="700">
+          INPUT SET B (B3..B0)
+        </text>
+      `;
+
+      // Addition-only schematic: no mode bus and no B-complement XOR gates.
+      const stageY = {
+        3: 110, // Upper band 1
+        2: 195, // Upper band 2
+        1: 425, // Lower band 1
+        0: 565  // Lower band 2 (LSB)
+      };
+
+      // Render all 4 Full Adder + Mode XOR stages (all gates facing RIGHTWARD ->)
+      [0, 1, 2, 3].forEach((i) => {
+        const st = sim.stages[i];
+        const y0 = stageY[i];
+        const ax = aPinX[i] + 16; // Right pin of A_i
+        const bx = bPinX[i] + 16; // Right pin of B_i
+        const isHighlighted = state.rippleHighlightStage === i;
+
+        // X coordinates of the full-adder gates in Stage i:
+        const xor1Y = y0 + 2;
+        const and1Y = y0 + 44;
+        const xor2Y = y0 + 10;
+        const and2Y = y0 + 52;
+        const or1Y  = y0 + 38;
+
+        // Highlight box around Stage i when animating ripple or inspecting
+        html += `
+          <rect x="818" y="${y0 - 8}" width="388" height="98" rx="8"
+            fill="${isHighlighted ? 'rgba(2, 132, 199, 0.10)' : 'none'}"
+            stroke="${isHighlighted ? '#0284c7' : (state.cvLightTheme ? '#e2e8f0' : '#1e293b')}"
+            stroke-width="${isHighlighted ? '2.2' : '1'}"
+            class="${isHighlighted ? 'stage-highlight' : ''}" />
+          <text x="826" y="${y0 - 12}" fill="${labelColor}" font-family="JetBrains Mono" font-size="9.5" font-weight="700">
+            STAGE ${i} (FA${i}: A${i}, B${i} &rarr; S${i}, C${i + 1})
+          </text>
+        `;
+
+        // Wire from Input Pin A_i (middle row) to Stage i FA_XOR1 and FA_AND1
+        const aTapX = ax + 14;
+        html += `
+          <path d="M ${ax},${abPinY + 14} L ${aTapX},${abPinY + 14} L ${aTapX},${xor1Y + 8} L 925,${xor1Y + 8}" fill="none" class="${wCls(st.a)}" />
+          <path d="M ${905},${xor1Y + 8} L ${905},${and1Y + 8} L 925,${and1Y + 8}" fill="none" class="${wCls(st.a)}" />
+          <circle cx="905" cy="${xor1Y + 8}" r="3" fill="${dotColor(st.a)}" />
+        `;
+
+        // Direct B_i connection to the XOR and AND input pins.
+        const bTapX = bx + 14;
+        html += `
+          <path d="M ${bx},${abPinY + 14} L ${bTapX},${abPinY + 14} L ${bTapX},${xor1Y + 24} L 925,${xor1Y + 24}" fill="none" class="${wCls(st.b)}" />
+          <path d="M ${bTapX},${abPinY + 14} L ${bTapX},${and1Y + 24} L 925,${and1Y + 24}" fill="none" class="${wCls(st.b)}" />
+          <circle cx="${bTapX}" cy="${abPinY + 14}" r="3" fill="${dotColor(st.b)}" />
+        `;
+
+        // Draw FA_XOR1 (P_i = A_i ^ B_i) and FA_AND1 (G_i = A_i & B_i) facing RIGHT ->
+        html += drawXorGate(925, xor1Y, st.p, 'XOR');
+        html += drawAndGate(925, and1Y, st.g, 'AND');
+
+        const cNodeX = 1012;
+        if (i === 0) {
+          // Stage 0 LSB: Remove redundant FA_XOR2 and FA_AND2.
+          // Route P_i directly to the S_i output track.
+          html += `
+            <path d="M 968,${xor1Y + 16} L 995,${xor1Y + 16} L 995,${xor2Y + 16} L 1078,${xor2Y + 16}" fill="none" class="${wCls(st.p)}" />
+          `;
+          
+          // Connect C0=0 to the second input of the OR gate.
+          html += `
+            <path d="M 1110,${or1Y + 24} L 1135,${or1Y + 24}" fill="none" class="${wCls(0)}" />
+            <text x="1105" y="${or1Y + 27}" text-anchor="end" fill="${labelColor}" font-family="JetBrains Mono" font-size="9">C0=0</text>
+          `;
+          
+          // Wire from FA_AND1 (G_i) into FA_OR1
+          html += `
+            <path d="M 962,${and1Y + 16} L 982,${and1Y + 16} L 982,${or1Y + 8} L 1135,${or1Y + 8}" fill="none" class="${wCls(st.g)}" />
+          `;
+        } else {
+          // Wire P_i from FA_XOR1 output (968, xor1Y+16) to FA_XOR2 (1035, xor2Y+8) and FA_AND2 (1035, and2Y+8)
+          html += `
+            <path d="M 968,${xor1Y + 16} L 995,${xor1Y + 16} L 995,${xor2Y + 8} L 1035,${xor2Y + 8}" fill="none" class="${wCls(st.p)}" />
+            <path d="M 995,${xor2Y + 8} L 995,${and2Y + 8} L 1035,${and2Y + 8}" fill="none" class="${wCls(st.p)}" />
+            <circle cx="995" cy="${xor2Y + 8}" r="3" fill="${dotColor(st.p)}" />
+          `;
+
+          // Carry-In C_i wire into FA_XOR2 and FA_AND2
+          html += `
+            <path d="M ${cNodeX},${xor2Y + 24} L 1035,${xor2Y + 24}" fill="none" class="${wCls(st.cIn)}" />
+            <path d="M ${cNodeX},${xor2Y + 24} L ${cNodeX},${and2Y + 24} L 1035,${and2Y + 24}" fill="none" class="${wCls(st.cIn)}" />
+            <circle cx="${cNodeX}" cy="${xor2Y + 24}" r="3" fill="${dotColor(st.cIn)}" />
+          `;
+
+          // Draw FA_XOR2 (S_i = P_i ^ C_i) and FA_AND2 (T_i = P_i & C_i) facing RIGHT ->
+          html += drawXorGate(1035, xor2Y, st.s, 'XOR');
+          html += drawAndGate(1035, and2Y, st.t, 'AND');
+
+          // Wires from FA_AND1 (G_i at 962, and1Y+16) and FA_AND2 (T_i at 1072, and2Y+16) into FA_OR1 (1135, or1Y)
+          html += `
+            <path d="M 962,${and1Y + 16} L 982,${and1Y + 16} L 982,${or1Y + 8} L 1135,${or1Y + 8}" fill="none" class="${wCls(st.g)}" />
+            <path d="M 1072,${and2Y + 16} L 1112,${and2Y + 16} L 1112,${or1Y + 24} L 1135,${or1Y + 24}" fill="none" class="${wCls(st.t)}" />
+          `;
+        }
+
+        // Draw FA_OR1 (C_{i+1} = G_i | T_i) facing RIGHT ->
+        html += drawOrGate(1135, or1Y, st.cOut, 'OR');
+
+        // Route Sum Output S_i from FA_XOR2/P_i (1078, xor2Y+16) up to Top Row Output Pin S_i (outX['S'+i], outY+28)
+        const sOutTrackX = 1212 + i * 10;
+        const topPinX = outX['S' + i];
+        const topBusY = 82 + (3 - i) * 6;
+        html += `
+          <path d="M 1078,${xor2Y + 16} L ${sOutTrackX},${xor2Y + 16} L ${sOutTrackX},${topBusY} L ${topPinX},${topBusY} L ${topPinX},${outY + 28}"
+            fill="none" class="${wCls(st.s)}" />
+        `;
+
+        // Route Carry-Out C_{i+1} from FA_OR1 (1176, or1Y+16)
+        if (i < 3) {
+          const nextY0 = stageY[i + 1];
+          const nextXor2Y = nextY0 + 10;
+          const cCascadeX = 1190 + i * 6;
+          html += `
+            <path d="M 1176,${or1Y + 16} L ${cCascadeX},${or1Y + 16} L ${cCascadeX},${nextY0 + 86} L 1012,${nextY0 + 86} L 1012,${nextXor2Y + 24}"
+              fill="none" class="${wCls(st.cOut)}" />
+          `;
+        } else {
+          // Stage 3 Carry-Out (C4) routes straight to Top-Left CARRY Output Pin (outX.CARRY, outY+28)
+          html += `
+            <path d="M 1176,${or1Y + 16} L 1198,${or1Y + 16} L 1198,76 L ${outX.CARRY},76 L ${outX.CARRY},${outY + 28}"
+              fill="none" class="${wCls(st.cOut)}" />
+          `;
+        }
+      });
+
+      // --- 3. Draw Top-Row Output Pins (CARRY -> S3 -> S2 -> S1 -> S0) ---
+      html += drawCVOutputPin(outX.CARRY, outY, sim.carryOut, 'CARRY');
+      html += drawCVOutputPin(outX.S3, outY, sim.stages[3].s, 'S3');
+      html += drawCVOutputPin(outX.S2, outY, sim.stages[2].s, 'S2');
+      html += drawCVOutputPin(outX.S1, outY, sim.stages[1].s, 'S1');
+      html += drawCVOutputPin(outX.S0, outY, sim.stages[0].s, 'S0');
+
+      // --- 4. Draw Middle-Row Input Pins (Set A in Center-Left, Set B in Center-Right) ---
+      [3, 2, 1, 0].forEach((i) => {
+        html += drawCVInputPin(aPinX[i], abPinY, state.A[i], 'A' + i, 'A' + i);
+        html += drawCVInputPin(bPinX[i], abPinY, state.B[i], 'B' + i, 'B' + i);
+      });
+
+      svg.innerHTML = html;
+
+      // Attach click listeners to all interactive input pins inside the SVG
+      svg.querySelectorAll('[data-toggle-pin]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const pin = el.getAttribute('data-toggle-pin');
+          handlePinToggle(pin);
+        });
+      });
+    }
+
+    // --- Render Single-Stage Zoomed Gate Inspector (for Stage 0..3) ---
+    function renderSingleStageSchematic(sim, stageIdx) {
+      const st = sim.stages[stageIdx];
+      const pal = getActivePalette();
+      const svg = document.getElementById('singleStageSvg');
+      const wCls = (val) => val ? 'wire-high' : 'wire-low';
+
+      svg.innerHTML = `
+        <defs>
+          <pattern id="zoomGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <circle cx="2" cy="2" r="1" fill="#1e293b" />
+          </pattern>
+        </defs>
+        <rect width="920" height="420" fill="url(#zoomGrid)" rx="12" />
+
+        <text x="30" y="34" fill="#38bdf8" font-family="Inter" font-size="14" font-weight="700">
+          STAGE ${stageIdx} ZOOMED GATE INSPECTOR (All Gates Facing Rightward &rarr;)
+        </text>
+        <text x="30" y="54" fill="#94a3b8" font-family="JetBrains Mono" font-size="11">
+          P${stageIdx} = A${stageIdx}⊕B${stageIdx} = ${st.p}  |  S${stageIdx} = P${stageIdx}⊕C${stageIdx} = ${st.s}  |  C${stageIdx + 1} = (A${stageIdx}·B${stageIdx}) + (P${stageIdx}·C${stageIdx}) = ${st.cOut}
+        </text>
+
+        <g class="pin-btn" data-toggle-pin="A${stageIdx}">
+          <rect x="40" y="100" width="90" height="40" rx="8" fill="${st.a ? pal.main : '#1e293b'}" stroke="${st.a ? pal.dark : '#475569'}" stroke-width="2.2" />
+          <text x="85" y="125" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="14" font-weight="700">A${stageIdx} = ${st.a}</text>
+        </g>
+
+        <g class="pin-btn" data-toggle-pin="B${stageIdx}">
+          <rect x="40" y="180" width="90" height="40" rx="8" fill="${st.b ? pal.main : '#1e293b'}" stroke="${st.b ? pal.dark : '#475569'}" stroke-width="2.2" />
+          <text x="85" y="205" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="14" font-weight="700">B${stageIdx} = ${st.b}</text>
+        </g>
+<rect x="40" y="330" width="90" height="40" rx="8" fill="${st.cIn ? '#451a03' : '#0f172a'}" stroke="${st.cIn ? '#f59e0b' : '#475569'}" stroke-width="2" />
+        <text x="85" y="355" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="13" font-weight="700">C${stageIdx}(In)=${st.cIn}</text>
+
+        <path d="M 130,200 L 210,200" fill="none" class="${wCls(st.b)}" />
+        <text x="275" y="204" fill="#10b981" font-family="JetBrains Mono" font-size="11" font-weight="700">B${stageIdx}=${st.b}</text>
+
+        <path d="M 130,120 L 350,120" fill="none" class="${wCls(st.a)}" />
+        <path d="M 310,120 L 310,255 L 350,255" fill="none" class="${wCls(st.a)}" />
+        <circle cx="310" cy="120" r="4" fill="${st.a ? pal.main : '#475569'}" />
+
+        <path d="M 254,210 L 328,210 L 328,140 L 350,140" fill="none" class="${wCls(st.b)}" />
+        <path d="M 328,210 L 328,275 L 350,275" fill="none" class="${wCls(st.b)}" />
+        <circle cx="328" cy="210" r="4" fill="${st.b ? pal.main : '#475569'}" />
+
+        ${drawXorGate(348, 112, st.p, 'XOR2')}
+        <text x="418" y="125" fill="#38bdf8" font-family="JetBrains Mono" font-size="11" font-weight="700">P${stageIdx}=${st.p}</text>
+
+        ${drawAndGate(350, 247, st.g, 'AND1')}
+        <text x="418" y="262" fill="#cbd5e1" font-family="JetBrains Mono" font-size="11" font-weight="700">G${stageIdx}=${st.g}</text>
+
+        <path d="M 394,130 L 520,130" fill="none" class="${wCls(st.p)}" />
+        <path d="M 475,130 L 475,325 L 520,325" fill="none" class="${wCls(st.p)}" />
+        <circle cx="475" cy="130" r="4" fill="${st.p ? pal.main : '#475569'}" />
+
+        <path d="M 130,350 L 495,350 L 495,150 L 520,150" fill="none" class="${wCls(st.cIn)}" />
+        <path d="M 495,350 L 520,350" fill="none" class="${wCls(st.cIn)}" />
+        <circle cx="495" cy="350" r="4" fill="${st.cIn ? '#f59e0b' : '#475569'}" />
+
+        ${drawXorGate(518, 122, st.s, 'XOR3')}
+        ${drawAndGate(520, 319, st.t, 'AND2')}
+        <text x="585" y="334" fill="#cbd5e1" font-family="JetBrains Mono" font-size="11" font-weight="700">T${stageIdx}=${st.t}</text>
+
+        <path d="M 390,265 L 650,265 L 650,290 L 675,290" fill="none" class="${wCls(st.g)}" />
+        <path d="M 560,337 L 650,337 L 650,310 L 675,310" fill="none" class="${wCls(st.t)}" />
+        ${drawOrGate(673, 282, st.cOut, 'OR1')}
+
+        <path d="M 564,140 L 770,140" fill="none" class="${wCls(st.s)}" />
+        <rect x="770" y="118" width="115" height="44" rx="9" fill="${st.s ? pal.main : '#1e293b'}" stroke="${st.s ? pal.dark : '#475569'}" stroke-width="2.5" />
+        <text x="827" y="145" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="15" font-weight="700">S${stageIdx} = ${st.s}</text>
+
+        <path d="M 717,300 L 770,300" fill="none" class="${wCls(st.cOut)}" />
+        <rect x="770" y="278" width="115" height="44" rx="9" fill="${st.cOut ? '#451a03' : '#0f172a'}" stroke="${st.cOut ? '#f59e0b' : '#475569'}" stroke-width="2.5" />
+        <text x="827" y="305" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="14" font-weight="700">C${stageIdx + 1} = ${st.cOut}</text>
+      `;
+
+      svg.querySelectorAll('[data-toggle-pin]').forEach((el) => {
+        el.addEventListener('click', () => {
+          handlePinToggle(el.getAttribute('data-toggle-pin'));
+        });
+      });
+    }
+
+    // --- Render Stage-by-Stage Table ---
+    function renderSignalTable(sim) {
+      const tbody = document.getElementById('signalTableBody');
+      const badge = (val, highClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40') =>
+        `<span class="inline-flex h-6 w-6 items-center justify-center rounded-md border font-bold ${val ? highClass : 'bg-slate-800/70 text-slate-400 border-slate-700/70'}">${val}</span>`;
+
+      let rowsHtml = '';
+      for (let i = 3; i >= 0; i--) {
+        const st = sim.stages[i];
+        const isHighlighted = state.rippleHighlightStage === i;
+        rowsHtml += `
+          <tr class="${isHighlighted ? 'bg-sky-500/15' : 'hover:bg-slate-800/40'} transition">
+            <td class="py-2 px-3 font-semibold text-slate-200">
+              Bit ${i} <span class="text-[10px] text-slate-500">${i === 3 ? '(MSB)' : i === 0 ? '(LSB)' : ''}</span>
+            </td>
+            <td class="py-2 px-2 text-center">${badge(st.a, 'bg-sky-500/20 text-sky-300 border-sky-500/40')}</td>
+            <td class="py-2 px-2 text-center">${badge(st.b, 'bg-purple-500/20 text-purple-300 border-purple-500/40')}</td>
+            <td class="py-2 px-2 text-center">${badge(st.p)}</td>
+            <td class="py-2 px-2 text-center">${badge(st.cIn, 'bg-amber-500/20 text-amber-300 border-amber-500/40')}</td>
+            <td class="py-2 px-2 text-center">${badge(st.g)}</td>
+            <td class="py-2 px-2 text-center">${badge(st.t)}</td>
+            <td class="py-2 px-2 text-center">${badge(st.s, 'bg-emerald-500 text-slate-950 border-emerald-300')}</td>
+            <td class="py-2 px-2 text-center">${badge(st.cOut, 'bg-amber-500 text-slate-950 border-amber-300')}</td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = rowsHtml;
+    }
+
+    // --- Automated Truth Table Generator & Verification Runner ---
+    function buildTruthTableVectors(scope) {
+      const vectors = [];
+      if (scope === 'key32') {
+        const pairs = [
+          [8, 15], [0, 0], [1, 1], [2, 3],
+          [5, 3], [7, 8], [8, 8], [9, 6],
+          [10, 5], [12, 4], [15, 1], [15, 15],
+          [6, 7], [11, 9], [13, 14], [4, 12]
+        ];
+        pairs.forEach(([A, B]) => vectors.push({ A, B, M: 0 }));
+      } else {
+        for (let A = 0; A < 16; A++) {
+          for (let B = 0; B < 16; B++) vectors.push({ A, B, M: 0 });
+        }
+      }
+      return vectors;
+    }
+
+    function getConfiguredDelayMs() {
+      const rawVal = parseFloat(document.getElementById('delayInputVal').value) || 200;
+      const unit = document.getElementById('delayUnitSelect').value;
+      return unit === 's' ? Math.max(10, rawVal * 1000) : Math.max(10, rawVal);
+    }
+
+    function formatDelayLabel(ms) {
+      if (ms >= 1000) {
+        return (ms / 1000).toFixed(1) + 's';
+      }
+      return Math.round(ms) + 'ms';
+    }
+
+    function executeSingleVerificationStep(vec, stepNumber) {
+      // 1. Feed input into circuit
+      setVectors(vec.A, vec.B, vec.M);
+
+      // 2. Read actual circuit outputs from gate simulation
+      const sim = computeCircuit();
+
+      // 3. Calculate independent expected truth table output
+      const expected5Bit = vec.A + vec.B;
+      const expCarry = (expected5Bit >> 4) & 1;
+      const expS = expected5Bit & 0xF;
+
+      const pass = (sim.carryOut === expCarry) && (sim.valS === expS);
+      if (pass) state.autoVerify.passed++;
+      else state.autoVerify.failed++;
+
+      const rowObj = {
+        step: stepNumber,
+        M: vec.M,
+        A: vec.A,
+        B: vec.B,
+        bStar: sim.valBStar,
+        carryOut: sim.carryOut,
+        valS: sim.valS,
+        expCarry,
+        expS,
+        pass,
+        arithText: `${vec.A} + ${vec.B} = ${sim.val5Bit}`
+      };
+
+      state.autoVerify.results.unshift(rowObj);
+      if (state.autoVerify.results.length > 120) {
+        state.autoVerify.results.pop();
+      }
+      renderAutoTruthTable();
+    }
+
+    function renderAutoTruthTable() {
+      const tbody = document.getElementById('autoTruthTableBody');
+      const total = state.autoVerify.vectors.length || 1;
+      const done = state.autoVerify.currentIndex;
+      const pct = Math.min(100, Math.round((done / total) * 100));
+
+      document.getElementById('verifyProgressBar').style.width = `${pct}%`;
+      document.getElementById('verifyPassSummary').textContent =
+        `PASS: ${state.autoVerify.passed} / ${done}${state.autoVerify.failed ? ` (FAIL: ${state.autoVerify.failed})` : ''}`;
+
+      if (state.autoVerify.results.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-6 text-center text-slate-500">
+              Click "Start Auto-Verify", "Step Next Input Now", or "Verify All Instantly" to run automated truth table verification.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = state.autoVerify.results.map((r) => `
+        <tr data-auto-a="${r.A}" data-auto-b="${r.B}" class="cursor-pointer hover:bg-slate-800/70 transition">
+          <td class="py-1.5 px-3 text-slate-400">#${r.step}</td>
+          <td class="py-1.5 px-2 text-sky-300 font-semibold">${bin4(r.A)} <span class="text-slate-500">(${r.A})</span></td>
+          <td class="py-1.5 px-2 text-purple-300 font-semibold">${bin4(r.B)} <span class="text-slate-500">(${r.B})</span></td>
+          <td class="py-1.5 px-2 text-amber-200">${bin4(r.B)}</td>
+          <td class="py-1.5 px-2 text-amber-300 font-bold">${r.carryOut}</td>
+          <td class="py-1.5 px-2 text-emerald-300 font-bold">${bin4(r.valS)} <span class="text-slate-400">(${r.valS})</span></td>
+          <td class="py-1.5 px-2 text-slate-300">${r.expCarry}_${bin4(r.expS)}</td>
+          <td class="py-1.5 px-2 text-slate-400">${r.arithText}</td>
+          <td class="py-1.5 px-3 text-right">
+            <span class="rounded-full bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+              ${r.pass ? 'PASS ✅' : 'FAIL ❌'}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('[data-auto-a]').forEach((row) => {
+        row.addEventListener('click', () => {
+          const a = parseInt(row.getAttribute('data-auto-a'), 10);
+          const b = parseInt(row.getAttribute('data-auto-b'), 10);
+          setVectors(a, b, 0);
+          playTone(620, 0.04, 'triangle');
+        });
+      });
+    }
+
+    function stopAutoVerifier() {
+      state.autoVerify.running = false;
+      if (state.autoVerify.tickInterval) {
+        clearInterval(state.autoVerify.tickInterval);
+        state.autoVerify.tickInterval = null;
+      }
+      const delayMs = getConfiguredDelayMs();
+      document.getElementById('autoVerifyIcon').textContent = '▶';
+      document.getElementById('autoVerifyText').textContent = `Start Auto-Verify (Delay = ${formatDelayLabel(delayMs)})`;
+      document.getElementById('statusBadge').textContent = 'READY';
+    }
+
+    function triggerNextAutoStep() {
+      const scope = document.getElementById('truthTableScope').value;
+      if (state.autoVerify.vectors.length === 0 || state.autoVerify.currentIndex >= state.autoVerify.vectors.length) {
+        state.autoVerify.vectors = buildTruthTableVectors(scope);
+        state.autoVerify.currentIndex = 0;
+        state.autoVerify.passed = 0;
+        state.autoVerify.failed = 0;
+        state.autoVerify.results = [];
+      }
+
+      const vec = state.autoVerify.vectors[state.autoVerify.currentIndex];
+      state.autoVerify.currentIndex++;
+      executeSingleVerificationStep(vec, state.autoVerify.currentIndex);
+      playTone(520 + (state.autoVerify.currentIndex % 8) * 35, 0.035, 'sine');
+
+      state.autoVerify.delayMs = getConfiguredDelayMs();
+      state.autoVerify.remainingMs = state.autoVerify.delayMs;
+
+      if (state.autoVerify.currentIndex >= state.autoVerify.vectors.length) {
+        stopAutoVerifier();
+        document.getElementById('countdownTimerText').textContent = 'DONE ✅';
+        showToast(`Verified ${state.autoVerify.passed}/${state.autoVerify.vectors.length} truth table vectors!`);
+      }
+    }
+
+    function startOrToggleAutoVerifier() {
+      if (state.autoVerify.running) {
+        stopAutoVerifier();
+        return;
+      }
+
+      const scope = document.getElementById('truthTableScope').value;
+      if (state.autoVerify.currentIndex === 0 || state.autoVerify.currentIndex >= state.autoVerify.vectors.length) {
+        state.autoVerify.vectors = buildTruthTableVectors(scope);
+        state.autoVerify.currentIndex = 0;
+        state.autoVerify.passed = 0;
+        state.autoVerify.failed = 0;
+        state.autoVerify.results = [];
+      }
+
+      state.autoVerify.running = true;
+      state.autoVerify.delayMs = getConfiguredDelayMs();
+      document.getElementById('autoVerifyIcon').textContent = '⏸';
+      document.getElementById('autoVerifyText').textContent = 'Pause Auto-Verify';
+      document.getElementById('statusBadge').textContent = 'AUTO-VERIFYING';
+
+      // Execute first vector immediately upon starting
+      triggerNextAutoStep();
+
+      if (!state.autoVerify.running) return;
+
+      const tickStepMs = 50;
+      state.autoVerify.tickInterval = setInterval(() => {
+        if (!state.autoVerify.running) return;
+        state.autoVerify.remainingMs -= tickStepMs;
+
+        if (state.autoVerify.remainingMs <= 0) {
+          triggerNextAutoStep();
+        } else {
+          document.getElementById('countdownTimerText').textContent =
+            `Next in: ${formatDelayLabel(state.autoVerify.remainingMs)}`;
+        }
+      }, tickStepMs);
+    }
+
+    function runAllTruthTableInstantly() {
+      stopAutoVerifier();
+      const scope = document.getElementById('truthTableScope').value;
+      state.autoVerify.vectors = buildTruthTableVectors(scope);
+      state.autoVerify.currentIndex = 0;
+      state.autoVerify.passed = 0;
+      state.autoVerify.failed = 0;
+      state.autoVerify.results = [];
+
+      state.autoVerify.vectors.forEach((vec, idx) => {
+        state.autoVerify.currentIndex = idx + 1;
+        executeSingleVerificationStep(vec, idx + 1);
+      });
+
+      document.getElementById('countdownTimerText').textContent = 'ALL VERIFIED ✅';
+      playTone(780, 0.07, 'triangle');
+      showToast(`Verified all ${state.autoVerify.passed} truth table combinations (100% PASS)!`);
+    }
+
+    // --- Render Manual Testbench Log ---
+    function renderTestbenchLog() {
+      const tbody = document.getElementById('testbenchBody');
+      if (state.logs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-6 text-center text-slate-500">
+              No test vectors recorded yet. Click "+ Record State" to log test cases.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = state.logs.map((entry, idx) => `
+        <tr data-log-index="${idx}" class="cursor-pointer hover:bg-slate-800/70 transition">
+          <td class="py-2 px-2 text-sky-300">${entry.binA} (${entry.valA})</td>
+          <td class="py-2 px-2 text-purple-300">${entry.binB} (${entry.valB})</td>
+          <td class="py-2 px-2 text-amber-300 font-bold">${entry.carryOut}</td>
+          <td class="py-2 px-2 text-emerald-300 font-bold">${entry.binS} (${entry.resultLabel})</td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('[data-log-index]').forEach((row) => {
+        row.addEventListener('click', () => {
+          const idx = parseInt(row.getAttribute('data-log-index'), 10);
+          const item = state.logs[idx];
+          if (!item) return;
+          setVectors(item.valA, item.valB, 0);
+          playTone(620, 0.05, 'triangle');
+        });
+      });
+    }
+
+    function recordCurrentState() {
+      const sim = computeCircuit();
+      const resultLabel = `Sum=${sim.val5Bit}`;
+      state.logs.unshift({
+        valA: sim.valA,
+        valB: sim.valB,
+        binA: bin4(sim.valA),
+        binB: bin4(sim.valB),
+        carryOut: sim.carryOut,
+        binS: bin4(sim.valS),
+        resultLabel
+      });
+      if (state.logs.length > 25) state.logs.pop();
+      renderTestbenchLog();
+    }
+
+    // --- State Mutators ---
+    function handlePinToggle(pinName) {
+      if (pinName.startsWith('A')) {
+        const bit = parseInt(pinName.slice(1), 10);
+        state.A[bit] ^= 1;
+        playTone(state.A[bit] ? 580 : 420, 0.04, 'sine');
+      } else if (pinName.startsWith('B')) {
+        const bit = parseInt(pinName.slice(1), 10);
+        state.B[bit] ^= 1;
+        playTone(state.B[bit] ? 540 : 400, 0.04, 'sine');
+      }
+      renderAll();
+    }
+
+    function setVectors(valA, valB, mVal = state.M) {
+      const a = ((valA % 16) + 16) % 16;
+      const b = ((valB % 16) + 16) % 16;
+      for (let i = 0; i < 4; i++) {
+        state.A[i] = (a >> i) & 1;
+        state.B[i] = (b >> i) & 1;
+      }
+      state.M = 0; // Fixed addition mode; no mode input
+      renderAll();
+    }
+
+    // --- Ripple Animation Stepper ---
+    function stopRippleAnimation() {
+      if (state.rippleTimer) {
+        clearInterval(state.rippleTimer);
+        state.rippleTimer = null;
+      }
+      state.rippleHighlightStage = null;
+      document.getElementById('ripplePlayIcon').textContent = '▶';
+      document.getElementById('ripplePlayText').textContent = 'Animate Ripple';
+      document.getElementById('statusBadge').textContent = 'READY';
+      renderAll();
+    }
+
+    function startRippleAnimation() {
+      if (state.rippleTimer) {
+        stopRippleAnimation();
+        return;
+      }
+      let step = 0;
+      state.rippleHighlightStage = 0;
+      document.getElementById('ripplePlayIcon').textContent = '⏹';
+      document.getElementById('ripplePlayText').textContent = 'Stop Ripple';
+      document.getElementById('statusBadge').textContent = 'RIPPLE STAGE 0';
+      playTone(440, 0.06, 'sine');
+      renderAll();
+
+      state.rippleTimer = setInterval(() => {
+        step++;
+        if (step < 4) {
+          state.rippleHighlightStage = step;
+          document.getElementById('statusBadge').textContent = `RIPPLE STAGE ${step}`;
+          playTone(440 + step * 90, 0.06, 'sine');
+          renderAll();
+        } else {
+          playTone(880, 0.08, 'triangle');
+          stopRippleAnimation();
+        }
+      }, 650);
+    }
+
+    // --- Master Render ---
+    function renderAll() {
+      const sim = computeCircuit();
+      updateControlDeck(sim);
+      renderSignalTable(sim);
+
+      const fullContainer = document.getElementById('fullSchematicContainer');
+      const singleContainer = document.getElementById('singleStageContainer');
+      const stageBadge = document.getElementById('activeStageBadge');
+
+      if (state.selectedStage === 'all') {
+        fullContainer.classList.remove('hidden');
+        singleContainer.classList.add('hidden');
+        stageBadge.textContent = '1:1 Layout: Top Outputs • Mid A & B Rows • Rightward Gates';
+        renderFullSchematic(sim);
+      } else {
+        fullContainer.classList.add('hidden');
+        singleContainer.classList.remove('hidden');
+        const idx = parseInt(state.selectedStage, 10);
+        stageBadge.textContent = `Stage ${idx} Single-Bit Slice Inspector`;
+        renderSingleStageSchematic(sim, idx);
+      }
+    }
+
+    // --- Toast Helper ---
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      box.textContent = msg;
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 2200);
+    }
+
+    // --- Wire Up DOM Listeners ---
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.pin-toggle').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          handlePinToggle(btn.getAttribute('data-pin'));
+        });
+      });
+
+      // Active Wire & Switch Color Selector
+      function applyActiveColorPalette(key) {
+        state.activeColorKey = key;
+        const pal = getActivePalette();
+        const root = document.documentElement;
+        root.style.setProperty('--active-color', pal.main);
+        root.style.setProperty('--active-Color-dark', pal.dark);
+        root.style.setProperty('--active-glow', pal.glow);
+        root.style.setProperty('--active-fill-light', pal.fillLight);
+        root.style.setProperty('--active-fill-dark', pal.fillDark);
+        const dot = document.getElementById('legendHighDot');
+        if (dot) dot.className = pal.dotClass;
+        renderAll();
+      }
+
+      document.getElementById('activeColorSelect').addEventListener('change', (e) => {
+        applyActiveColorPalette(e.target.value);
+        playTone(600, 0.04, 'triangle');
+      });
+
+      // Canvas Theme Toggle (CV Light vs Dark)
+      document.getElementById('btnCanvasTheme').addEventListener('click', (e) => {
+        state.cvLightTheme = !state.cvLightTheme;
+        e.currentTarget.textContent = state.cvLightTheme ? '🎨 Canvas: CV Light' : '🌙 Canvas: Dark';
+        renderAll();
+      });
+
+      // Increment / Decrement buttons for A & B
+      document.getElementById('btnAInc').addEventListener('click', () => {
+        const sim = computeCircuit();
+        setVectors(sim.valA + 1, sim.valB, state.M);
+        playTone(560, 0.035);
+      });
+      document.getElementById('btnADec').addEventListener('click', () => {
+        const sim = computeCircuit();
+        setVectors(sim.valA - 1, sim.valB, state.M);
+        playTone(460, 0.035);
+      });
+      document.getElementById('btnBInc').addEventListener('click', () => {
+        const sim = computeCircuit();
+        setVectors(sim.valA, sim.valB + 1, state.M);
+        playTone(560, 0.035);
+      });
+      document.getElementById('btnBDec').addEventListener('click', () => {
+        const sim = computeCircuit();
+        setVectors(sim.valA, sim.valB - 1, state.M);
+        playTone(460, 0.035);
+      });
+
+      // Preset Selector (Wrapped to prevent null error if UI is removed)
+      const presetSelect = document.getElementById('presetSelect');
+      if (presetSelect) {
+        presetSelect.addEventListener('change', (e) => {
+          if (!e.target.value) return;
+          const [a, b, m] = e.target.value.split(',').map(Number);
+          setVectors(a, b, m);
+          recordCurrentState();
+          playTone(640, 0.06, 'triangle');
+        });
+      }
+
+      // Toolbar Buttons
+      document.getElementById('btnAudioToggle').addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        document.getElementById('audioIcon').textContent = state.soundEnabled ? '🔊' : '🔇';
+        document.getElementById('audioLabel').textContent = state.soundEnabled ? 'Sound On' : 'Muted';
+      });
+
+      document.getElementById('btnRipplePlay').addEventListener('click', () => {
+        startRippleAnimation();
+      });
+
+      document.getElementById('btnRandomize').addEventListener('click', () => {
+        const rA = Math.floor(Math.random() * 16);
+        const rB = Math.floor(Math.random() * 16);
+        const rM = Math.random() < 0.5 ? 0 : 1;
+        setVectors(rA, rB, rM);
+        playTone(600, 0.05, 'triangle');
+      });
+
+      document.getElementById('btnReset').addEventListener('click', () => {
+        stopRippleAnimation();
+        stopAutoVerifier();
+        setVectors(0, 0, 0);
+        if (document.getElementById('presetSelect')) {
+          document.getElementById('presetSelect').value = '';
+        }
+        playTone(360, 0.05, 'sine');
+      });
+
+      // Stage Focus Tabs
+      document.querySelectorAll('.stage-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          state.selectedStage = tab.getAttribute('data-stage');
+          document.querySelectorAll('.stage-tab').forEach((t) => {
+            t.className = 'stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+          });
+          tab.className = 'stage-tab rounded-lg px-2.5 py-1 text-xs font-medium bg-emerald-500 text-slate-950 font-semibold transition';
+          renderAll();
+        });
+      });
+
+      // Automated Truth Table Verifier Controls
+      document.getElementById('btnAutoVerifyStart').addEventListener('click', () => {
+        startOrToggleAutoVerifier();
+      });
+
+      document.getElementById('btnAutoStepNow').addEventListener('click', () => {
+        triggerNextAutoStep();
+      });
+
+      document.getElementById('btnAutoInstantAll').addEventListener('click', () => {
+        runAllTruthTableInstantly();
+      });
+
+      document.getElementById('btnToggleScriptCode').addEventListener('click', () => {
+        const drawer = document.getElementById('scriptCodeDrawer');
+        drawer.classList.toggle('hidden');
+      });
+
+      document.getElementById('btnCopyScriptCode').addEventListener('click', () => {
+        const codeText = document.getElementById('automationScriptPre').innerText;
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = codeText;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast('Automation script copied to clipboard!');
+        } catch (err) {
+          showToast('Unable to copy script');
+        }
+      });
+
+      const syncDelayUI = () => {
+        const ms = getConfiguredDelayMs();
+        state.autoVerify.delayMs = ms;
+        state.autoVerify.remainingMs = ms;
+        document.getElementById('countdownTimerText').textContent = `Delay Timer: ${formatDelayLabel(ms)}`;
+        if (!state.autoVerify.running) {
+          document.getElementById('autoVerifyText').textContent = `Start Auto-Verify (Delay = ${formatDelayLabel(ms)})`;
+        }
+      };
+
+      document.getElementById('delayInputVal').addEventListener('input', syncDelayUI);
+      document.getElementById('delayUnitSelect').addEventListener('change', syncDelayUI);
+
+      document.querySelectorAll('.delay-preset-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const [val, unit] = btn.getAttribute('data-delay-preset').split(',');
+          document.getElementById('delayInputVal').value = val;
+          document.getElementById('delayUnitSelect').value = unit;
+          document.querySelectorAll('.delay-preset-btn').forEach((b) => {
+            b.className = 'delay-preset-btn rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-[11px] font-mono text-slate-300 hover:bg-slate-700';
+          });
+          btn.className = 'delay-preset-btn rounded bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 text-[11px] font-mono text-emerald-300 hover:bg-emerald-500/30';
+          syncDelayUI();
+        });
+      });
+
+      document.getElementById('truthTableScope').addEventListener('change', () => {
+        stopAutoVerifier();
+        state.autoVerify.vectors = buildTruthTableVectors(document.getElementById('truthTableScope').value);
+        state.autoVerify.currentIndex = 0;
+        state.autoVerify.passed = 0;
+        state.autoVerify.failed = 0;
+        state.autoVerify.results = [];
+        renderAutoTruthTable();
+      });
+
+      // Manual Testbench Logger Controls
+      document.getElementById('btnLogCurrent').addEventListener('click', () => {
+        recordCurrentState();
+        playTone(700, 0.04);
+      });
+
+      document.getElementById('btnClearLog').addEventListener('click', () => {
+        state.logs = [];
+        renderTestbenchLog();
+      });
+
+      document.getElementById('btnCopyLog').addEventListener('click', () => {
+        const header = 'A_Bin,A_Dec,B_Bin,B_Dec,CARRY_C4,S_Bin,Result\n';
+        const rows = state.logs.map((l) =>
+          `${l.binA},${l.valA},${l.binB},${l.valB},${l.carryOut},${l.binS},"${l.resultLabel}"`
+        ).join('\n');
+        const csv = header + rows;
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = csv;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast('Testbench CSV copied to clipboard!');
+        } catch (err) {
+          showToast('Unable to copy to clipboard');
+        }
+      });
+
+      // Seed starter manual logs and initialize exact CircuitVerse default snapshot: A=1000 (8), B=1111 (15), M=0 => CARRY=1, S=0111
+      setVectors(6, 5, 1);
+      recordCurrentState();
+      setVectors(5, 3, 0);
+      recordCurrentState();
+      setVectors(8, 15, 0);
+      recordCurrentState();
+
+      // Seed initial Automated Truth Table step #1 (A=1000, B=1111, M=0) so the truth table shows the live verified state right away
+      state.autoVerify.vectors = buildTruthTableVectors('key32');
+      state.autoVerify.currentIndex = 1;
+      executeSingleVerificationStep(state.autoVerify.vectors[0], 1);
+    });
+  </script>
+</body>
+</html>
