@@ -123,7 +123,7 @@
             </span>
           </div>
           <p class="text-xs text-slate-400">
-            4-Bit Binary Adder &bull; Author: <span class="text-slate-300 font-medium">Soumik Jana</span> &bull; Tab: <code class="text-amber-300 font-mono">Main</code>
+            4-Bit Binary Adder &bull; Author: <span class="text-slate-300 font-medium">Soumik Jana, Subhankar Ojha, Dibit Sha</span> &bull; Tab: <code class="text-amber-300 font-mono">Main</code>
           </p>
         </div>
       </div>
@@ -325,7 +325,7 @@
     <section class="rounded-2xl border border-slate-800 bg-slate-900/75 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-mono">
         <span class="rounded-lg bg-slate-950 px-2.5 py-1 border border-slate-800 text-slate-300">
-          Equation: <strong id="liveEquationText" class="text-emerald-400">8 (1000₂) + 15 (1111₂) = 23 (10111₂)</strong>
+          Equation: <strong id="liveEquationText" class="text-emerald-400">8 (1000) + 15 (1111) = 23 (10111)</strong>
         </span>
         <span id="subCarryNote" class="text-xs text-slate-400">
           Carry C4 = 1
@@ -891,7 +891,7 @@ async function autoVerifyTruthTable(delayMs = TIME_DELAY_MS) {
 
       const eqEl = document.getElementById('liveEquationText');
       const noteEl = document.getElementById('subCarryNote');
-      eqEl.textContent = `${sim.valA} (${bin4(sim.valA)}₂) + ${sim.valB} (${bin4(sim.valB)}₂) = ${sim.val5Bit} (${sim.carryOut}${bin4(sim.valS)}₂)`;
+      eqEl.textContent = `${sim.valA} (${bin4(sim.valA)})₂ + ${sim.valB} (${bin4(sim.valB)})₂ = ${sim.val5Bit} (${sim.carryOut}${bin4(sim.valS)})₂`;
       noteEl.textContent = `Addition only • Carry Out C4 = ${sim.carryOut}`;
     }
 
@@ -1194,73 +1194,99 @@ async function autoVerifyTruthTable(delayMs = TIME_DELAY_MS) {
       const svg = document.getElementById('singleStageSvg');
       const wCls = (val) => val ? 'wire-high' : 'wire-low';
 
+      // Theme (follows the Canvas: CV Light / Dark toggle)
+      const L = state.cvLightTheme;
+      const container = document.getElementById('singleStageContainer');
+      if (L) {
+        container.classList.remove('bg-[#070b14]', 'dark-canvas');
+        container.classList.add('bg-[#f8fafc]');
+      } else {
+        container.classList.remove('bg-[#f8fafc]');
+        container.classList.add('bg-[#070b14]', 'dark-canvas');
+      }
+      const T = {
+        grid: L ? '#cbd5e1' : '#1e293b',
+        title: L ? '#0369a1' : '#38bdf8',
+        sub: L ? '#475569' : '#94a3b8',
+        offFill: L ? '#e2e8f0' : '#1e293b',
+        offStroke: L ? '#94a3b8' : '#475569',
+        offText: L ? '#0f172a' : '#ffffff',
+        cOnFill: L ? '#fef3c7' : '#451a03',
+        cOffFill: L ? '#ffffff' : '#0f172a',
+        cText: L ? '#b45309' : '#fbbf24',
+        lblB: L ? '#047857' : '#10b981',
+        lblP: L ? '#0284c7' : '#38bdf8',
+        lblG: L ? '#334155' : '#cbd5e1',
+        dotOff: L ? '#64748b' : '#475569'
+      };
+
       svg.innerHTML = `
         <defs>
           <pattern id="zoomGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="#1e293b" />
+            <circle cx="2" cy="2" r="1" fill="${T.grid}" />
           </pattern>
         </defs>
         <rect width="920" height="420" fill="url(#zoomGrid)" rx="12" />
 
-        <text x="30" y="34" fill="#38bdf8" font-family="Inter" font-size="14" font-weight="700">
+        <text x="30" y="34" fill="${T.title}" font-family="Inter" font-size="14" font-weight="700">
           STAGE ${stageIdx} ZOOMED GATE INSPECTOR (All Gates Facing Rightward &rarr;)
         </text>
-        <text x="30" y="54" fill="#94a3b8" font-family="JetBrains Mono" font-size="11">
+        <text x="30" y="54" fill="${T.sub}" font-family="JetBrains Mono" font-size="11">
           P${stageIdx} = A${stageIdx}⊕B${stageIdx} = ${st.p}  |  S${stageIdx} = P${stageIdx}⊕C${stageIdx} = ${st.s}  |  C${stageIdx + 1} = (A${stageIdx}·B${stageIdx}) + (P${stageIdx}·C${stageIdx}) = ${st.cOut}
         </text>
 
         <g class="pin-btn" data-toggle-pin="A${stageIdx}">
-          <rect x="40" y="100" width="90" height="40" rx="8" fill="${st.a ? pal.main : '#1e293b'}" stroke="${st.a ? pal.dark : '#475569'}" stroke-width="2.2" />
-          <text x="85" y="125" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="14" font-weight="700">A${stageIdx} = ${st.a}</text>
+          <rect x="40" y="100" width="90" height="40" rx="8" fill="${st.a ? pal.main : T.offFill}" stroke="${st.a ? pal.dark : T.offStroke}" stroke-width="2.2" />
+          <text x="85" y="125" text-anchor="middle" fill="${st.a ? '#ffffff' : T.offText}" font-family="JetBrains Mono" font-size="14" font-weight="700">A${stageIdx} = ${st.a}</text>
         </g>
 
         <g class="pin-btn" data-toggle-pin="B${stageIdx}">
-          <rect x="40" y="180" width="90" height="40" rx="8" fill="${st.b ? pal.main : '#1e293b'}" stroke="${st.b ? pal.dark : '#475569'}" stroke-width="2.2" />
-          <text x="85" y="205" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="14" font-weight="700">B${stageIdx} = ${st.b}</text>
+          <rect x="40" y="180" width="90" height="40" rx="8" fill="${st.b ? pal.main : T.offFill}" stroke="${st.b ? pal.dark : T.offStroke}" stroke-width="2.2" />
+          <text x="85" y="205" text-anchor="middle" fill="${st.b ? '#ffffff' : T.offText}" font-family="JetBrains Mono" font-size="14" font-weight="700">B${stageIdx} = ${st.b}</text>
         </g>
-<rect x="40" y="330" width="90" height="40" rx="8" fill="${st.cIn ? '#451a03' : '#0f172a'}" stroke="${st.cIn ? '#f59e0b' : '#475569'}" stroke-width="2" />
-        <text x="85" y="355" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="13" font-weight="700">C${stageIdx}(In)=${st.cIn}</text>
+<rect x="40" y="330" width="90" height="40" rx="8" fill="${st.cIn ? T.cOnFill : T.cOffFill}" stroke="${st.cIn ? '#f59e0b' : T.offStroke}" stroke-width="2" />
+        <text x="85" y="355" text-anchor="middle" fill="${T.cText}" font-family="JetBrains Mono" font-size="13" font-weight="700">C${stageIdx}(In)=${st.cIn}</text>
 
-        <path d="M 130,200 L 210,200" fill="none" class="${wCls(st.b)}" />
-        <text x="275" y="204" fill="#10b981" font-family="JetBrains Mono" font-size="11" font-weight="700">B${stageIdx}=${st.b}</text>
+        <path d="M 130,200 L 328,200" fill="none" class="${wCls(st.b)}" />
+        <text x="200" y="193" fill="${T.lblB}" font-family="JetBrains Mono" font-size="11" font-weight="700">B${stageIdx}=${st.b}</text>
 
         <path d="M 130,120 L 350,120" fill="none" class="${wCls(st.a)}" />
         <path d="M 310,120 L 310,255 L 350,255" fill="none" class="${wCls(st.a)}" />
-        <circle cx="310" cy="120" r="4" fill="${st.a ? pal.main : '#475569'}" />
+        <circle cx="310" cy="120" r="4" fill="${st.a ? pal.main : T.dotOff}" />
 
-        <path d="M 254,210 L 328,210 L 328,140 L 350,140" fill="none" class="${wCls(st.b)}" />
-        <path d="M 328,210 L 328,275 L 350,275" fill="none" class="${wCls(st.b)}" />
-        <circle cx="328" cy="210" r="4" fill="${st.b ? pal.main : '#475569'}" />
+        <path d="M 328,200 L 328,140 L 350,140" fill="none" class="${wCls(st.b)}" />
+        <path d="M 328,200 L 328,275 L 350,275" fill="none" class="${wCls(st.b)}" />
+        <circle cx="328" cy="200" r="4" fill="${st.b ? pal.main : T.dotOff}" />
 
         ${drawXorGate(348, 112, st.p, 'XOR2')}
-        <text x="418" y="125" fill="#38bdf8" font-family="JetBrains Mono" font-size="11" font-weight="700">P${stageIdx}=${st.p}</text>
+        <text x="418" y="125" fill="${T.lblP}" font-family="JetBrains Mono" font-size="11" font-weight="700">P${stageIdx}=${st.p}</text>
 
         ${drawAndGate(350, 247, st.g, 'AND1')}
-        <text x="418" y="262" fill="#cbd5e1" font-family="JetBrains Mono" font-size="11" font-weight="700">G${stageIdx}=${st.g}</text>
+        <text x="418" y="262" fill="${T.lblG}" font-family="JetBrains Mono" font-size="11" font-weight="700">G${stageIdx}=${st.g}</text>
 
         <path d="M 394,130 L 520,130" fill="none" class="${wCls(st.p)}" />
         <path d="M 475,130 L 475,325 L 520,325" fill="none" class="${wCls(st.p)}" />
-        <circle cx="475" cy="130" r="4" fill="${st.p ? pal.main : '#475569'}" />
+        <circle cx="475" cy="130" r="4" fill="${st.p ? pal.main : T.dotOff}" />
 
         <path d="M 130,350 L 495,350 L 495,150 L 520,150" fill="none" class="${wCls(st.cIn)}" />
         <path d="M 495,350 L 520,350" fill="none" class="${wCls(st.cIn)}" />
-        <circle cx="495" cy="350" r="4" fill="${st.cIn ? '#f59e0b' : '#475569'}" />
+        <circle cx="495" cy="350" r="4" fill="${st.cIn ? '#f59e0b' : T.dotOff}" />
 
         ${drawXorGate(518, 122, st.s, 'XOR3')}
         ${drawAndGate(520, 319, st.t, 'AND2')}
-        <text x="585" y="334" fill="#cbd5e1" font-family="JetBrains Mono" font-size="11" font-weight="700">T${stageIdx}=${st.t}</text>
+        <text x="585" y="334" fill="${T.lblG}" font-family="JetBrains Mono" font-size="11" font-weight="700">T${stageIdx}=${st.t}</text>
 
         <path d="M 390,265 L 650,265 L 650,290 L 675,290" fill="none" class="${wCls(st.g)}" />
         <path d="M 560,337 L 650,337 L 650,310 L 675,310" fill="none" class="${wCls(st.t)}" />
         ${drawOrGate(673, 282, st.cOut, 'OR1')}
 
         <path d="M 564,140 L 770,140" fill="none" class="${wCls(st.s)}" />
-        <rect x="770" y="118" width="115" height="44" rx="9" fill="${st.s ? pal.main : '#1e293b'}" stroke="${st.s ? pal.dark : '#475569'}" stroke-width="2.5" />
-        <text x="827" y="145" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="15" font-weight="700">S${stageIdx} = ${st.s}</text>
+        <rect x="770" y="118" width="115" height="44" rx="9" fill="${st.s ? pal.main : T.offFill}" stroke="${st.s ? pal.dark : T.offStroke}" stroke-width="2.5" />
+        <text x="827" y="145" text-anchor="middle" fill="${st.s ? '#ffffff' : T.offText}" font-family="JetBrains Mono" font-size="15" font-weight="700">S${stageIdx} = ${st.s}</text>
 
         <path d="M 717,300 L 770,300" fill="none" class="${wCls(st.cOut)}" />
-        <rect x="770" y="278" width="115" height="44" rx="9" fill="${st.cOut ? '#451a03' : '#0f172a'}" stroke="${st.cOut ? '#f59e0b' : '#475569'}" stroke-width="2.5" />
-        <text x="827" y="305" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="14" font-weight="700">C${stageIdx + 1} = ${st.cOut}</text>
+        <rect x="770" y="278" width="115" height="44" rx="9" fill="${st.cOut ? T.cOnFill : T.cOffFill}" stroke="${st.cOut ? '#f59e0b' : T.offStroke}" stroke-width="2.5" />
+        <text x="827" y="305" text-anchor="middle" fill="${T.cText}" font-family="JetBrains Mono" font-size="14" font-weight="700">C${stageIdx + 1} = ${st.cOut}</text>
       `;
 
       svg.querySelectorAll('[data-toggle-pin]').forEach((el) => {
